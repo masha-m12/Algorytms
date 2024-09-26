@@ -35,7 +35,7 @@ int CompleteEnumeration(int index, int visited, int n, int start_city, int& min_
         }
 
         // вывод текущего маршрута и его стоимости
-        std::cout << "Маршрут: ";
+        /*std::cout << "Маршрут: ";
         std::cout << start_city + 1 << " -> ";
         for (size_t i = 0; i < current_route.size(); ++i) {
             std::cout << current_route[i] + 1;
@@ -43,7 +43,7 @@ int CompleteEnumeration(int index, int visited, int n, int start_city, int& min_
                 std::cout << " -> ";
             }
         }
-        std::cout << " -> " << start_city + 1 << " (стоимость: " << total_cost << ")" << "\n";
+        std::cout << " -> " << start_city + 1 << " (стоимость: " << total_cost << ")" << "\n";*/
 
         return total_cost;
     }
@@ -93,80 +93,75 @@ int Heuristic_GreedyAlgorithm(int start_city, const std::vector<std::vector<int>
     greedy_route.push_back(start_city); // добавляем стартовый город в конец маршрута
     return greedy_cost;
 }
-
 int main() {
     setlocale(LC_ALL, "Russian");
     std::srand(static_cast<unsigned int>(std::time(0)));
 
-    for (int i = 0; i < 3; ++i) { // цикл для 3-х наборов
+    for (int i = 0; i < 3; ++i) { // цикл для 3-х матриц
         int n;
-        int start_city;
-
-        std::cout << "Введите количество городов для набора " << i + 1 << ": ";
+        std::cout << "Введите количество городов для матрицы " << i + 1 << ": ";
         std::cin >> n;
 
+        std::vector< std::vector<int>> cost_matrix(n, std::vector<int>(n));
+        RandMas(cost_matrix, n);
+
+        std::cout << "Сгенерированная матрица стоимостей:" << '\n';
+        for (const auto& row : cost_matrix) {
+            for (int cost : row) {
+                std::cout << cost << '\t'; // стоимость с табуляцией
+            }
+            std::cout << '\n';
+        }
+
+        int start_city;
         std::cout << "Введите начальный город (от 1 до " << n << "): ";
         std::cin >> start_city;
 
         if (start_city < 1 || start_city > n) {
-            std::cout << "Такого города нет" << '\n';
+            std::cout << "Некорректный номер города!" << '\n';
             return 1; // ошибка
         }
 
         start_city--; // преобразуем к индексу от 0
 
-        std::cout << "\nНабор " << i + 1 << " \n";
+        // полный перебор
+        int min_cost = std::numeric_limits<int>::max();
+        int max_cost = std::numeric_limits<int>::min();
+        std::vector<int> current_route; // текущий маршрут   
+        std::vector<int> best_route; // лучший маршрут
 
-        for (int j = 0; j < 3; ++j) { // Цикл для 3х матриц
-            std::cout << "\nМатрица " << j + 1 << ":\n";
+        unsigned int start_time = clock(); // начало измерения времени
+        CompleteEnumeration(start_city, 1 << start_city, n, start_city, min_cost, max_cost, 0, cost_matrix, current_route, best_route);
+        unsigned int end_time = clock(); // конец измерения времени
 
-            std::vector< std::vector<int>> cost_matrix(n, std::vector<int>(n));
-            RandMas(cost_matrix, n);
+        unsigned int elapsed_time = end_time - start_time; //затраченное время
 
-            for (const auto& row : cost_matrix) {
-                for (int cost : row) {
-                    std::cout << cost << '\t';
-                }
-                std::cout << '\n';
+        std::cout << "Минимальная стоимость полного перебора: " << min_cost << '\n';
+        std::cout << "Максимальная стоимость полного перебора: " << max_cost << "\n";
+        std::cout << "Время выполнения полного перебора: " << elapsed_time << " милисекунд" << '\n';
+
+        // эвристика
+        std::vector<int> greedy_route;
+        int greedy_cost = 0;
+
+        start_time = clock(); // начало измерения времени
+        Heuristic_GreedyAlgorithm(start_city, cost_matrix, greedy_route, greedy_cost);
+        end_time = clock(); // конец измерения времени
+
+        elapsed_time = end_time - start_time; // затраченное время
+
+        std::cout << "Маршрут, построенный с помощью жадного алгоритма: ";
+        for (size_t i = 0; i < greedy_route.size(); ++i) {
+            std::cout << greedy_route[i] + 1;
+            if (i < greedy_route.size() - 1) {
+                std::cout << " -> ";
             }
-
-            // полный перебор
-            int min_cost = std::numeric_limits<int>::max();
-            int max_cost = std::numeric_limits<int>::min();
-            std::vector<int> current_route;
-            std::vector<int> best_route;
-
-            unsigned int start_time = clock();
-            CompleteEnumeration(start_city, 1 << start_city, n, start_city, min_cost, max_cost, 0, cost_matrix, current_route, best_route);
-            unsigned int end_time = clock();
-            unsigned int elapsed_time = end_time - start_time;
-
-            std::cout << "Минимальная стоимость полного перебора: " << min_cost << '\n';
-            std::cout << "Максимальная стоимость полного перебора: " << max_cost << '\n';
-            std::cout << "Время выполнения полного перебора: " << elapsed_time << " милисекунд" << '\n';
-
-            // эвристика
-            std::vector<int> greedy_route;
-            int greedy_cost = 0;
-
-            start_time = clock();
-            Heuristic_GreedyAlgorithm(start_city, cost_matrix, greedy_route, greedy_cost);
-            end_time = clock();
-            elapsed_time = end_time - start_time;
-
-            std::cout << "Маршрут, построенный с помощью жадного алгоритма: ";
-            for (size_t i = 0; i < greedy_route.size(); ++i) {
-                std::cout << greedy_route[i] + 1;
-                if (i < greedy_route.size() - 1) {
-                    std::cout << " -> ";
-                }
-            }
-            std::cout << " (стоимость: " << greedy_cost << ")" << '\n';
-            std::cout << "Время выполнения жадного алгоритма: " << elapsed_time << " милисекунд" << '\n';
-            float percent = abs(100 - ((100 * greedy_cost - 100 * min_cost) / (max_cost - min_cost)));
-            std::cout << "Качество решения: " << percent << "%" << '\n';
-            std::cout << '\n';
         }
+        std::cout << " (стоимость: " << greedy_cost << ")" << '\n';
+        std::cout << "Время выполнения жадного алгоритма: " << elapsed_time << " милисекунд" << '\n';
+        float percent = abs(100 - ((100 * greedy_cost - 100 * min_cost) / (max_cost - min_cost)));
+        std::cout << "Качество решения: " << percent << "%" << '\n';
+        std::cout << "\n--------------------\n";
     }
 
     return 0;
