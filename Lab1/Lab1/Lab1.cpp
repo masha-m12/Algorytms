@@ -20,7 +20,7 @@ void RandMas(std::vector<std::vector<int>>& cost_matrix, int n) {
     }
 }
 
-int CompleteEnumeration(int index, int visited, int n, int start_city, int& min_cost, int& max_cost, int current_cost, const std::vector<std::vector<int>>& cost_matrix, std::vector<int>& current_route, std::vector<int>& best_route) {
+int CompleteEnumeration(int index, int visited, int n, int start_city, int& min_cost, int& max_cost, int current_cost, const std::vector<std::vector<int>>& cost_matrix, std::vector<int>& current_route, std::vector<int>& best_route, bool print_route) {
     if (visited == (1 << n) - 1) {
         int total_cost = current_cost + cost_matrix[index][start_city]; // cтоимость возвращения в стартовый город
 
@@ -35,16 +35,17 @@ int CompleteEnumeration(int index, int visited, int n, int start_city, int& min_
         }
 
         // вывод текущего маршрута и его стоимости
-        std::cout << "Маршрут: ";
-        std::cout << start_city + 1 << " -> ";
-        for (size_t i = 0; i < current_route.size(); ++i) {
-            std::cout << current_route[i] + 1;
-            if (i < current_route.size() - 1) {
-                std::cout << " -> ";
+        if (print_route) {
+            std::cout << "Маршрут: ";
+            std::cout << start_city + 1 << " -> ";
+            for (size_t i = 0; i < current_route.size(); ++i) {
+                std::cout << current_route[i] + 1;
+                if (i < current_route.size() - 1) {
+                    std::cout << " -> ";
+                }
             }
+            std::cout << " -> " << start_city + 1 << " (стоимость: " << total_cost << ")" << "\n";
         }
-        std::cout << " -> " << start_city + 1 << " (стоимость: " << total_cost << ")" << "\n";
-
         return total_cost;
     }
 
@@ -52,7 +53,7 @@ int CompleteEnumeration(int index, int visited, int n, int start_city, int& min_
         if (!(visited & (1 << city))) {
             current_route.push_back(city); // добавляем город в текущий маршрут
 
-            CompleteEnumeration(city, visited | (1 << city), n, start_city, min_cost, max_cost, current_cost + cost_matrix[index][city], cost_matrix, current_route, best_route);
+            CompleteEnumeration(city, visited | (1 << city), n, start_city, min_cost, max_cost, current_cost + cost_matrix[index][city], cost_matrix, current_route, best_route, print_route);
             current_route.pop_back();
         }
     }
@@ -130,6 +131,10 @@ int main() {
                 std::cout << '\n';
             }
 
+            bool print_route;
+            std::cout << "Хотите видеть текущий маршрут? (1 - да, 0 - нет): ";
+            std::cin >> print_route;
+
             // полный перебор
             int min_cost = std::numeric_limits<int>::max();
             int max_cost = std::numeric_limits<int>::min();
@@ -137,7 +142,7 @@ int main() {
             std::vector<int> best_route;
 
             unsigned int start_time = clock();
-            CompleteEnumeration(start_city, 1 << start_city, n, start_city, min_cost, max_cost, 0, cost_matrix, current_route, best_route);
+            CompleteEnumeration(start_city, 1 << start_city, n, start_city, min_cost, max_cost, 0, cost_matrix, current_route, best_route, print_route);
             unsigned int end_time = clock();
             unsigned int elapsed_time = end_time - start_time;
 
