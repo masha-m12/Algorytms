@@ -41,8 +41,10 @@ namespace Shell {
         int n = arr.size();
         std::vector<int> gaps;
 
-        for (int m = 1; pow(2, m) - 1 < n; m++) {
-            gaps.push_back(pow(2, m) - 1); // 2^m - 1
+        for (int m = 1; ; m++) {
+            int gap = pow(2, m) - 1; // результат возведения в степень в переменную
+            if (gap >= n) break;
+            gaps.push_back(gap);
         }
 
         for (int i = gaps.size() - 1; i >= 0; i--) {
@@ -84,17 +86,37 @@ namespace Shell {
 
 }
 
-void SaveArrayToFile(const std::vector<int>& arr, const std::string& filename) {
-    std::ofstream file(filename);
-    if (file.is_open()) {
-        for (int num : arr) {
-            file << num << "\n";
+namespace Array {
+
+    void SaveToFile(const std::vector<int>& arr, const std::string& filename) {
+        std::ofstream file(filename);
+        if (file.is_open()) {
+            for (int num : arr) {
+                file << num << "\n";
+            }
+            file.close();
         }
-        file.close();
+        else {
+            std::cerr << "Не удалось открыть файл для записи: " << filename << "\n";
+        }
     }
-    else {
-        std::cerr << "Не удалось открыть файл для записи: " << filename << "\n";
+
+    std::vector<int> ReadFromFile(const std::string& filename) {
+        std::vector<int> arr;
+        std::ifstream file(filename);
+        if (file.is_open()) {
+            int value;
+            while (file >> value) {
+                arr.push_back(value);
+            }
+            file.close();
+        }
+        else {
+            std::cout << "Не удалось открыть файл для чтения: " << filename << "\n";
+        }
+        return arr;
     }
+
 }
 
 unsigned int MeasureTime(void(*func)(std::vector<int>&), std::vector<int>& arr) {
@@ -107,7 +129,24 @@ unsigned int MeasureTime(void(*func)(std::vector<int>&), std::vector<int>& arr) 
 int main() {
     setlocale(LC_ALL, "Russian");
 
-    const std::vector<int> sizes = { 10000, 100000, 1000000 };
+    const std::vector<std::string> filenames = {
+        "исходный_массив_10000_-10_10.txt",
+        "исходный_массив_10000_-1000_1000.txt",
+        "исходный_массив_10000_-100000_100000.txt",
+        "исходный_массив_100000_-10_10.txt",
+        "исходный_массив_100000_-1000_1000.txt",
+        "исходный_массив_100000_-100000_100000.txt",
+        "исходный_массив_1000000_-10_10.txt",
+        "исходный_массив_1000000_-1000_1000.txt",
+        "исходный_массив_1000000_-100000_100000.txt"
+    };
+
+    for (const auto& filename : filenames) {
+        std::vector<int> arrHibbard = Array::ReadFromFile(filename);
+        std::vector<int> arrKnuth = arrHibbard;
+        std::vector<int> arrSedgwick = arrHibbard;
+
+    /*const std::vector<int> sizes = {10000, 100000, 1000000};
     const std::vector<std::pair<int, int>> ranges = { {-10, 10}, {-1000, 1000}, {-100000, 100000} };
 
     for (int i = 0; i < sizes.size(); ++i) {
@@ -120,22 +159,26 @@ int main() {
             std::vector<int> arrSedgwick = arrHibbard;
 
             std::string filename = "исходный_массив_" + std::to_string(size) + "_" + std::to_string(range.first) + "_" + std::to_string(range.second) + ".txt";
-            SaveArrayToFile(arrHibbard, filename);
+            Array::SaveToFile(arrHibbard, filename);*/
 
-            unsigned int timeHibbard = MeasureTime(Shell::HibbardGaps, arrHibbard);
-            std::cout << "Время работы Хиббард (в миллисекундах): " << timeHibbard << "\n";
+            unsigned int totalTimeHibbard = 0, totalTimeKnuth = 0, totalTimeSedgwick = 0;
+            for (int k = 0; k < 3; ++k) {
+                totalTimeHibbard += MeasureTime(Shell::HibbardGaps, arrHibbard);
+                totalTimeKnuth += MeasureTime(Shell::KnuthGaps, arrKnuth);
+                totalTimeSedgwick += MeasureTime(Shell::SedgwickGaps, arrSedgwick);
+            }
 
-            unsigned int timeKnuth = MeasureTime(Shell::KnuthGaps, arrKnuth);
-            std::cout << "Время работы Кнут (в миллисекундах): " << timeKnuth << "\n";
+            unsigned int averageTimeHibbard = totalTimeHibbard / 3;
+            unsigned int averageTimeKnuth = totalTimeKnuth / 3;
+            unsigned int averageTimeSedgwick = totalTimeSedgwick / 3;
 
-            unsigned int timeSedgwick = MeasureTime(Shell::SedgwickGaps, arrSedgwick);
-            std::cout << "Время работы Сэджвик (в миллисекундах): " << timeSedgwick << "\n";
+            std::cout << "Файл: " << filename << "\n";
+            std::cout << "Среднее время работы Хиббард (в миллисекундах): " << averageTimeHibbard << "\n";
+            std::cout << "Среднее время работы Кнут (в миллисекундах): " << averageTimeKnuth << "\n";
+            std::cout << "Среднее время работы Сэджвик (в миллисекундах): " << averageTimeSedgwick << "\n";
 
-            int AverageTime = (timeHibbard + timeKnuth + timeSedgwick) / 3;
-            std::cout << "Среднее время работы алгоритма (в миллисекундах): " << AverageTime << "\n";
-
-            std::cout << '\n';
+            std::cout << "\n";
         }
-    }
+    //}
     return 0;
 }
